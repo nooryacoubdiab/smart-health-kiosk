@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Health Kiosk</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500;600&display=swap');
+
+        :root {
+            --ink: #16261F;
+            --paper: #F3F1E9;
+            --paper-2: #EAE7DB;
+            --teal-deep: #0B4A3C;
+            --teal: #146B54;
+            --teal-light: #BFE0D2;
+            --coral: #C1442E;
+            --coral-light: #F3D9D2;
+            --serif: 'Fraunces', Georgia, serif;
+            --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+            --arabic: 'Noto Kufi Arabic', 'IBM Plex Sans', sans-serif;
+            --mono: 'IBM Plex Mono', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 15% 10%, rgba(20, 107, 84, 0.06), transparent 45%),
+                radial-gradient(circle at 85% 90%, rgba(193, 68, 46, 0.05), transparent 45%),
+                var(--paper);
+            color: var(--ink);
+            font-family: var(--sans);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        body[dir="rtl"] {
+            font-family: var(--arabic);
+        }
+
+        .device {
+            width: 460px;
+            background: var(--teal-deep);
+            border-radius: 26px;
+            padding: 14px;
+            box-shadow: 0 24px 60px rgba(11, 74, 60, 0.18), 0 4px 12px rgba(11, 74, 60, 0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px 12px;
+            color: var(--paper);
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.03em;
+        }
+
+        .status-bar .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #7FD9AE;
+            display: inline-block;
+            margin-right: 6px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+        .lang-toggle {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: var(--paper);
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .lang-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .screen {
+            background: #fff;
+            border-radius: 18px;
+            padding: 36px 32px 32px;
+            min-height: 560px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .progress {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+        }
+
+        .progress .bar {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--paper-2);
+            transition: background .3s;
+        }
+
+        .progress .bar.done {
+            background: var(--teal);
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--teal);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        [dir="rtl"] .eyebrow {
+            font-family: var(--arabic);
+            text-transform: none;
+        }
+
+        .eyebrow::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--coral);
+        }
+
+        h1 {
+            font-family: var(--serif);
+            font-weight: 500;
+            font-size: 26px;
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+
+        [dir="rtl"] h1 {
+            font-family: var(--arabic);
+            font-weight: 600;
+        }
+
+        p.sub {
+            color: #5C6960;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .step {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .step.active {
+            display: flex;
+            animation: fadeIn .35s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bp-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #3C4A42;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        [dir="rtl"] label {
+            text-transform: none;
+        }
+
+        label svg {
+            width: 13px;
+            height: 13px;
+            stroke: var(--teal);
+            flex-shrink: 0;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--paper-2);
+            border-radius: 10px;
+            font-family: var(--mono);
+            font-size: 15px;
+            background: var(--paper);
+            color: var(--ink);
+            transition: border-color .15s;
+        }
+
+        [dir="rtl"] select {
+            font-family: var(--arabic);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--teal);
+            background: #fff;
+        }
+
+        .sensor-panel {
+            border: 1.5px dashed var(--paper-2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            transition: border-color .2s, background .2s;
+        }
+
+        .sensor-panel.found {
+            border-style: solid;
+            border-color: var(--teal);
+            background: rgba(191, 224, 210, 0.25);
+        }
+
+        .sensor-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sensor-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #DDD8C8;
+            flex-shrink: 0;
+        }
+
+        .sensor-panel.waiting .sensor-dot {
+            background: var(--coral);
+            animation: pulseDot 1.2s infinite;
+        }
+
+        .sensor-panel.found .sensor-dot {
+            background: var(--teal);
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .sensor-text {
+            font-size: 13px;
+            color: #5C6960;
+        }
+
+        .sensor-values {
+            display: flex;
+            gap: 18px;
+            margin-top: 10px;
+        }
+
+        .sensor-values div {
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .sensor-values b {
+            font-size: 17px;
+            color: var(--teal-deep);
+        }
+
+        .simulate-link {
+            font-size: 11px;
+            color: var(--teal);
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        button {
+            width: 100%;
+            margin-top: auto;
+            padding: 15px;
+            background: var(--teal-deep);
+            color: var(--paper);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14.5px;
+            cursor: pointer;
+            transition: background .15s, transform .1s, opacity .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: var(--teal);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--teal-deep);
+            border: 1.5px solid var(--paper-2);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: var(--paper);
+        }
+
+        .patient-box {
+            background: var(--paper);
+            border: 1px solid var(--paper-2);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--teal-light);
+            color: var(--teal-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--serif);
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step3 {
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .pulse-icon {
+            width: 52px;
+            height: 52px;
+            margin-bottom: 6px;
+        }
+
+        .pulse-icon path {
+            fill: none;
+            stroke: var(--coral);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw 1s ease-out .1s forwards;
+        }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .ticket {
+            border-radius: 14px;
+            padding: 28px 24px;
+            width: 100%;
+            animation: pop .35s cubic-bezier(.2, 1.4, .4, 1);
+        }
+
+        @keyframes pop {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .ticket.standard {
+            background: var(--teal-light);
+            border: 1px solid var(--teal);
+        }
+
+        .ticket.priority {
+            background: var(--coral-light);
+            border: 1px solid var(--coral);
+        }
+
+        .ticket p.label {
+            font-family: var(--mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.65;
+        }
+
+        [dir="rtl"] .ticket p.label {
+            font-family: var(--arabic);
+            text-transform: none;
+        }
+
+        .ticket h2 {
+            font-family: var(--mono);
+            font-size: 44px;
+            font-weight: 500;
+            margin: 6px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .ticket .queue-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .ticket .wait-line {
+            font-size: 12.5px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        .emergency-screen {
+            background: var(--coral);
+            color: #fff;
+            border-radius: 14px;
+            padding: 32px 24px;
+            width: 100%;
+            text-align: center;
+            animation: pop .35s cubic-bezier(.2, 1.4, .4, 1);
+        }
+
+        .emergency-screen svg {
+            width: 44px;
+            height: 44px;
+            margin-bottom: 14px;
+        }
+
+        .emergency-screen h2 {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .emergency-screen p {
+            font-size: 13.5px;
+            opacity: 0.9;
+        }
+
+        .error-screen {
+            background: #fff;
+            border: 2px solid var(--coral);
+            border-radius: 14px;
+            padding: 28px 22px;
+            width: 100%;
+            text-align: center;
+            animation: pop .35s cubic-bezier(.2, 1.4, .4, 1);
+        }
+
+        .error-screen svg {
+            width: 36px;
+            height: 36px;
+            margin-bottom: 10px;
+            stroke: var(--coral);
+        }
+
+        .error-screen h2 {
+            font-family: var(--serif);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--coral);
+        }
+
+        .error-screen p {
+            font-size: 13px;
+            color: #5C6960;
+        }
+
+        .error {
+            color: var(--coral);
+            font-size: 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+
+<body id="body">
+
+    <div class="device">
+        <div class="status-bar">
+            <span><span class="dot"></span><span id="kioskLabel">Kiosk 01 — Online</span></span>
+            <span style="display:flex; align-items:center; gap:10px;">
+                <span id="clock"></span>
+                <button class="lang-toggle" onclick="toggleLang()" id="langBtn">العربية</button>
+            </span>
+        </div>
+
+        <div class="screen">
+            <div class="progress">
+                <div class="bar" id="pbar1"></div>
+                <div class="bar" id="pbar2"></div>
+                <div class="bar" id="pbar3"></div>
+            </div>
+
+            <!-- Step 1: National ID -->
+            <div class="step active" id="step1">
+                <div class="eyebrow" data-t="eyebrow1"></div>
+                <h1 data-t="title1"></h1>
+                <p class="sub" data-t="sub1"></p>
+                <div class="field">
+                    <label><svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <rect x="3" y="5" width="18" height="14" rx="2" />
+                            <circle cx="9" cy="12" r="2" />
+                            <path d="M15 10h3M15 14h3" />
+                        </svg><span data-t="labelId"></span></label>
+                    <input id="nationalId" placeholder="9876543210" autofocus>
+                </div>
+                <div class="error" id="err1"></div>
+                <button onclick="fetchPatient()"><span data-t="btnContinue"></span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Step 2: Vitals -->
+            <div class="step" id="step2">
+                <div class="eyebrow" data-t="eyebrow2"></div>
+                <h1 data-t="title2"></h1>
+                <p class="sub" data-t="sub2"></p>
+                <div class="patient-box">
+                    <div class="avatar" id="avatarLetter"></div>
+                    <div id="patientInfo"></div>
+                </div>
+
+                <div class="field">
+                    <label><svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <path d="M3 12h4l2-7 4 14 2-7h6" />
+                        </svg><span data-t="labelBp"></span></label>
+                    <div class="bp-row">
+                        <input id="bpSys" type="number" placeholder="120 (systolic)">
+                        <input id="bpDia" type="number" placeholder="80 (diastolic)">
+                    </div>
+                </div>
+                <div class="field">
+                    <label><svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <path d="M12 3v10a4 4 0 1 1-3 0V3z" />
+                        </svg><span data-t="labelTemp"></span></label>
+                    <input id="temp" type="number" step="0.1" placeholder="37.2">
+                </div>
+
+                <div class="sensor-panel waiting" id="sensorPanel">
+                    <div class="sensor-row">
+                        <span class="sensor-dot"></span>
+                        <span class="sensor-text" id="sensorText" data-t="sensorWaiting"></span>
+                    </div>
+                    <div class="sensor-values" id="sensorValues" style="display:none;">
+                        <div><span data-t="labelSpo2Short"></span>: <b id="valSpo2">—</b></div>
+                        <div><span data-t="labelPulse"></span>: <b id="valPulse">—</b></div>
+                    </div>
+                    <span class="simulate-link" onclick="simulateReading()" data-t="simulateLink"></span>
+                </div>
+
+                <div class="error" id="err2"></div>
+                <button onclick="proceedAfterVitals()" id="submitBtn" disabled><span data-t="btnContinue2"></span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Step 2b: Department picker -->
+            <div class="step" id="step2b">
+                <div class="eyebrow" data-t="eyebrowDept"></div>
+                <h1 data-t="titleDept"></h1>
+                <p class="sub" data-t="subDept"></p>
+                <div class="field">
+                    <label><svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                            <path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6" />
+                        </svg><span data-t="labelDept"></span></label>
+                    <select id="departmentSelect"></select>
+                </div>
+                <div class="error" id="err2b"></div>
+                <button onclick="submitFinal()" id="deptSubmitBtn"><span data-t="btnTicket"></span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Step 3: Result -->
+            <div class="step step3" id="step3">
+                <div id="resultBox"></div>
+                <button class="btn-secondary" onclick="reset()" id="doneBtn"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const T = {
+            en: {
+                eyebrow1: 'Smart Health Kiosk', title1: 'Welcome', sub1: 'Enter your national ID to begin.',
+                labelId: 'National ID', btnContinue: 'Continue',
+                eyebrow2: 'Vitals check', title2: 'How are you feeling?', sub2: 'Blood pressure and temperature are entered manually. SpO2 and pulse are read automatically.',
+                labelBp: 'Blood pressure (systolic / diastolic)', labelTemp: 'Temperature (°C)', labelSpo2Short: 'SpO2', labelPulse: 'Pulse', btnContinue2: 'Continue',
+                sensorWaiting: 'Waiting for sensor reading…', sensorFound: 'Reading received',
+                simulateLink: '(simulate reading — testing only)',
+                eyebrowDept: 'One more step', titleDept: 'Choose a department', subDept: 'Based on your medical history, you may choose which department to visit.',
+                labelDept: 'Department', btnTicket: 'Get my ticket',
+                ticketLabel: 'Your ticket', priorityQ: 'Priority Queue', standardQ: 'Standard Queue',
+                waitLine: (m) => `Estimated wait: ~${m} min`,
+                emergencyTitle: 'Please go to Emergency', emergencyBody: 'Your readings require immediate medical attention. Please proceed to the Emergency Department now.',
+                errorTitle: 'Could not process request', done: (s) => `Done (${s}s)`,
+                errNotFound: '⚠ National ID not found.', errGeneric: '⚠ Something went wrong. Please try again.',
+                kiosk: 'Kiosk 01 — Online', langBtnText: 'العربية',
+                dept: { general: 'General', beds: 'Beds / Admission', dental: 'Dental', maternity: 'Maternity', labs: 'Laboratories', radiology: 'Radiology', pharmacy: 'Pharmacy', internal: 'Internal Medicine', chest: 'Chest / Pulmonary', ent: 'ENT' }
+            },
+            ar: {
+                eyebrow1: 'كشك صحي ذكي', title1: 'أهلاً وسهلاً', sub1: 'أدخل رقمك الوطني للبدء.',
+                labelId: 'الرقم الوطني', btnContinue: 'متابعة',
+                eyebrow2: 'فحص القياسات', title2: 'كيف تشعر؟', sub2: 'ضغط الدم والحرارة يُدخلان يدويًا. الأكسجين والنبض يُقرآن تلقائيًا من الحساس.',
+                labelBp: 'ضغط الدم (انقباضي / انبساطي)', labelTemp: 'الحرارة (°م)', labelSpo2Short: 'الأكسجين', labelPulse: 'النبض', btnContinue2: 'متابعة',
+                sensorWaiting: 'بانتظار قراءة الحساس…', sensorFound: 'تم استلام القراءة',
+                simulateLink: '(محاكاة قراءة — للاختبار فقط)',
+                eyebrowDept: 'خطوة أخيرة', titleDept: 'اختر القسم', subDept: 'بناءً على تاريخك المرضي، يمكنك اختيار القسم الذي تريد زيارته.',
+                labelDept: 'القسم', btnTicket: 'استلام التذكرة',
+                ticketLabel: 'تذكرتك', priorityQ: 'طابور الأولوية', standardQ: 'الطابور العادي',
+                waitLine: (m) => `الوقت المتوقع: ~${m} دقيقة`,
+                emergencyTitle: 'الرجاء التوجه للطوارئ', emergencyBody: 'قياساتك تستدعي عناية طبية فورية. الرجاء التوجه لقسم الطوارئ حالاً.',
+                errorTitle: 'تعذّر إتمام الطلب', done: (s) => `تم (${s} ث)`,
+                errNotFound: '⚠ الرقم الوطني غير موجود.', errGeneric: '⚠ حدث خطأ. حاول مرة أخرى.',
+                kiosk: 'كشك ٠١ — متصل', langBtnText: 'English',
+                dept: { general: 'عام', beds: 'أسرة', dental: 'أسنان', maternity: 'أمومة', labs: 'المختبرات', radiology: 'الأشعة', pharmacy: 'الصيدلية', internal: 'الباطنية', chest: 'الصدرية', ent: 'أنف أذن حنجرة' }
+            }
+        };
+        let lang = 'en';
+        let currentPatient = null;
+        let latestSensorReading = null;
+        let countdownTimer = null;
+        let sensorPollTimer = null;
+        const DEPARTMENTS = ['general', 'beds', 'dental', 'maternity', 'labs', 'radiology', 'pharmacy', 'internal', 'chest', 'ent'];
+
+        function applyLang() {
+            const t = T[lang];
+            document.body.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            document.querySelectorAll('[data-t]').forEach(el => {
+                const key = el.getAttribute('data-t');
+                if (typeof t[key] === 'string') el.textContent = t[key];
+            });
+            document.getElementById('kioskLabel').textContent = t.kiosk;
+            document.getElementById('langBtn').textContent = t.langBtnText;
+            document.getElementById('nationalId').placeholder = lang === 'ar' ? 'مثال: ٩٨٧٦٥٤٣٢١٠' : 'e.g. 9876543210';
+            document.getElementById('sensorText').textContent = latestSensorReading ? t.sensorFound : t.sensorWaiting;
+            populateDepartmentSelect();
+        }
+        function toggleLang() { lang = lang === 'en' ? 'ar' : 'en'; applyLang(); }
+
+        function populateDepartmentSelect() {
+            const sel = document.getElementById('departmentSelect');
+            const t = T[lang];
+            sel.innerHTML = DEPARTMENTS.map(code => `<option value="${code}">${t.dept[code]}</option>`).join('');
+        }
+
+        function tickClock() {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        tickClock(); setInterval(tickClock, 1000);
+
+        function setProgress(step) {
+            document.getElementById('pbar1').classList.toggle('done', step >= 1);
+            document.getElementById('pbar2').classList.toggle('done', step >= 2);
+            document.getElementById('pbar3').classList.toggle('done', step >= 3);
+        }
+
+        function goToStep(id) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function fetchPatient() {
+            const id = document.getElementById('nationalId').value.trim();
+            const err = document.getElementById('err1');
+            err.textContent = '';
+            try {
+                const res = await fetch(`/api/patient/${id}`);
+                if (!res.ok) throw new Error('not found');
+                currentPatient = await res.json();
+                document.getElementById('avatarLetter').textContent = currentPatient.name.charAt(0);
+                document.getElementById('patientInfo').innerHTML =
+                    `<b>${currentPatient.name}</b><br><span style="color:#5C6960">${lang === 'ar' ? 'العمر' : 'Age'} ${currentPatient.age}</span>`;
+                goToStep('step2');
+                setProgress(2);
+                resetSensorPanel();
+                startSensorPolling();
+            } catch (e) {
+                err.textContent = T[lang].errNotFound;
+            }
+        }
+
+        function resetSensorPanel() {
+            latestSensorReading = null;
+            const panel = document.getElementById('sensorPanel');
+            panel.classList.remove('found'); panel.classList.add('waiting');
+            document.getElementById('sensorValues').style.display = 'none';
+            document.getElementById('sensorText').textContent = T[lang].sensorWaiting;
+            document.getElementById('submitBtn').disabled = true;
+        }
+
+        function startSensorPolling() {
+            clearInterval(sensorPollTimer);
+            sensorPollTimer = setInterval(checkSensorReading, 2000);
+            checkSensorReading();
+        }
+
+        async function checkSensorReading() {
+            if (!currentPatient) return;
+            try {
+                const res = await fetch(`/api/latest-vitals/${currentPatient.national_id}`);
+                const data = await res.json();
+                if (data.reading) {
+                    latestSensorReading = data.reading;
+                    clearInterval(sensorPollTimer);
+                    const panel = document.getElementById('sensorPanel');
+                    panel.classList.remove('waiting'); panel.classList.add('found');
+                    document.getElementById('sensorText').textContent = T[lang].sensorFound;
+                    document.getElementById('sensorValues').style.display = 'flex';
+                    document.getElementById('valSpo2').textContent = data.reading.spo2 ?? '—';
+                    document.getElementById('valPulse').textContent = data.reading.pulse ?? '—';
+                    document.getElementById('submitBtn').disabled = false;
+                }
+            } catch (e) { /* silent retry */ }
+        }
+
+        async function simulateReading() {
+            if (!currentPatient) return;
+            await fetch('/api/sensor-reading', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    national_id: currentPatient.national_id,
+                    pulse: Math.floor(65 + Math.random() * 35),
+                    spo2: Math.floor(90 + Math.random() * 9)
+                })
+            });
+            checkSensorReading();
+        }
+
+        function getVitalsPayload() {
+            return {
+                national_id: currentPatient.national_id,
+                bp_sys: Number(document.getElementById('bpSys').value) || null,
+                bp_dia: Number(document.getElementById('bpDia').value) || null,
+                temp: Number(document.getElementById('temp').value) || null,
+                spo2: latestSensorReading ? latestSensorReading.spo2 : null,
+                pulse: latestSensorReading ? latestSensorReading.pulse : null,
+            };
+        }
+
+        async function proceedAfterVitals() {
+            const err = document.getElementById('err2');
+            const btn = document.getElementById('submitBtn');
+            err.textContent = '';
+            btn.disabled = true;
+
+            const payload = getVitalsPayload();
+            try {
+                const res = await fetch('/api/triage-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    err.textContent = `⚠ ${data.error || T[lang].errGeneric}`;
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (data.level === 'emergency') {
+                    await submitFinal();
+                    return;
+                }
+
+                if (currentPatient.has_history === 1) {
+                    goToStep('step2b');
+                    setProgress(3);
+                } else {
+                    await submitFinal();
+                }
+            } catch (e) {
+                err.textContent = T[lang].errGeneric;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function submitFinal() {
+            const payload = getVitalsPayload();
+            const chosenDept = document.getElementById('departmentSelect').value;
+            payload.department = chosenDept;
+            payload.source = 'manual';
+
+            try {
+                const res = await fetch('/api/vitals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    renderErrorScreen(data.error || T[lang].errGeneric);
+                    goToStep('step3');
+                    setProgress(3);
+                    startCountdown(10);
+                    return;
+                }
+
+                renderResult(data);
+                goToStep('step3');
+                setProgress(3);
+                startCountdown(10);
+            } catch (e) {
+                renderErrorScreen(T[lang].errGeneric);
+                goToStep('step3');
+                setProgress(3);
+                startCountdown(10);
+            }
+        }
+
+        function renderErrorScreen(message) {
+            const t = T[lang];
+            document.getElementById('resultBox').innerHTML = `
+    <div class="error-screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <h2>${t.errorTitle}</h2>
+      <p>${message}</p>
+    </div>`;
+        }
+
+        function renderResult(data) {
+            const t = T[lang];
+            const box = document.getElementById('resultBox');
+            if (data.queue_type === 'emergency') {
+                box.innerHTML = `
+      <div class="emergency-screen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        <h2>${t.emergencyTitle}</h2>
+        <p>${t.emergencyBody}</p>
+      </div>`;
+            } else {
+                box.innerHTML = `
+      <div class="ticket ${data.queue_type}">
+        <p class="label">${t.ticketLabel}</p>
+        <h2>${data.ticket_no}</h2>
+        <p class="queue-name">${data.queue_type === 'priority' ? t.priorityQ : t.standardQ} — ${t.dept[data.department]}</p>
+        <p class="wait-line">${t.waitLine(data.estimated_wait_minutes)}</p>
+      </div>`;
+            }
+        }
+
+        function startCountdown(seconds) {
+            clearInterval(countdownTimer);
+            let remaining = seconds;
+            const doneBtn = document.getElementById('doneBtn');
+            doneBtn.textContent = T[lang].done(remaining);
+            countdownTimer = setInterval(() => {
+                remaining -= 1;
+                if (remaining <= 0) { clearInterval(countdownTimer); reset(); return; }
+                doneBtn.textContent = T[lang].done(remaining);
+            }, 1000);
+        }
+
+        function reset() {
+            clearInterval(countdownTimer);
+            clearInterval(sensorPollTimer);
+            currentPatient = null;
+            latestSensorReading = null;
+            document.getElementById('nationalId').value = '';
+            document.getElementById('bpSys').value = '';
+            document.getElementById('bpDia').value = '';
+            document.getElementById('temp').value = '';
+            goToStep('step1');
+            setProgress(1);
+        }
+
+        applyLang();
+        setProgress(1);
+    </script>
+</body>
+
+</html>
