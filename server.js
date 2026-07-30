@@ -14,9 +14,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const DEPARTMENTS = ['general', 'beds', 'dental', 'maternity', 'labs', 'radiology', 'pharmacy', 'internal', 'chest', 'ent'];
 const WAIT_MINUTES_PER_PATIENT = 12;
 
-// bp_sys: systolic blood pressure. bp_dia: diastolic blood pressure.
-// Either one being abnormal is enough to raise the level (matches the same
-// logic already used for temp/pulse/spo2).
 function classifyTriage({ bp_sys, bp_dia, spo2, temp, pulse }) {
     const isEmergency =
         (temp != null && (temp >= 41 || temp < 35)) ||
@@ -61,6 +58,24 @@ function validateVitals({ bp_sys, bp_dia, spo2, temp, pulse }) {
     }
     return null;
 }
+
+// ---------- Active session tracking ----------
+let activeSessionNationalId = null;
+
+app.post('/api/session/start', (req, res) => {
+    const { national_id } = req.body;
+    activeSessionNationalId = national_id || null;
+    res.json({ status: 'started', national_id: activeSessionNationalId });
+});
+
+app.post('/api/session/end', (req, res) => {
+    activeSessionNationalId = null;
+    res.json({ status: 'ended' });
+});
+
+app.get('/api/session/current', (req, res) => {
+    res.json({ national_id: activeSessionNationalId });
+});
 
 // ---------- GET /api/patient/:national_id ----------
 app.get('/api/patient/:national_id', (req, res) => {
