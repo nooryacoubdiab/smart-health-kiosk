@@ -755,6 +755,23 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // ---------- Session tracking (tells the sensor who is at the kiosk) ----------
+        async function startSession(nationalId) {
+            try {
+                await fetch('/api/session/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ national_id: nationalId })
+                });
+            } catch (e) { /* non-critical, ignore */ }
+        }
+
+        async function endSession() {
+            try {
+                await fetch('/api/session/end', { method: 'POST' });
+            } catch (e) { /* non-critical, ignore */ }
+        }
+
         async function fetchPatient() {
             const id = document.getElementById('nationalId').value.trim();
             const err = document.getElementById('err1');
@@ -770,6 +787,7 @@
                 setProgress(2);
                 resetSensorPanel();
                 startSensorPolling();
+                startSession(currentPatient.national_id); // tell the sensor who is active now
             } catch (e) {
                 err.textContent = T[lang].errNotFound;
             }
@@ -887,6 +905,8 @@
                 });
                 const data = await res.json();
 
+                endSession(); // sensor reading is no longer needed once the ticket is issued
+
                 if (!res.ok) {
                     renderErrorScreen(data.error || T[lang].errGeneric);
                     goToStep('step3');
@@ -900,6 +920,7 @@
                 setProgress(3);
                 startCountdown(10);
             } catch (e) {
+                endSession();
                 renderErrorScreen(T[lang].errGeneric);
                 goToStep('step3');
                 setProgress(3);
@@ -953,6 +974,7 @@
         function reset() {
             clearInterval(countdownTimer);
             clearInterval(sensorPollTimer);
+            endSession();
             currentPatient = null;
             latestSensorReading = null;
             document.getElementById('nationalId').value = '';
