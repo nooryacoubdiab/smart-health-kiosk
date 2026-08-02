@@ -59,14 +59,23 @@ function validateVitals({ bp_sys, bp_dia, spo2, temp, pulse }) {
   return null;
 }
 
-// ---------- Active session tracking (fixed: tracks session start time too) ----------
+// ---------- Active session tracking (fixed: consistent timestamp format) ----------
+// Produces a timestamp in the exact same format SQLite's datetime('now') uses,
+// so string comparison against recorded_at works correctly.
+function sqliteNow() {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+}
+function sqliteMinutesAgo(minutes) {
+  return new Date(Date.now() - minutes * 60000).toISOString().slice(0, 19).replace('T', ' ');
+}
+
 let activeSessionNationalId = null;
 let activeSessionStartedAt = null;
 
 app.post('/api/session/start', (req, res) => {
   const { national_id } = req.body;
   activeSessionNationalId = national_id || null;
-  activeSessionStartedAt = new Date().toISOString();
+  activeSessionStartedAt = sqliteNow();
   res.json({ status: 'started', national_id: activeSessionNationalId });
 });
 
@@ -280,9 +289,7 @@ app.get('/api/latest-vitals/:national_id', (req, res) => {
   if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
   const isActiveSession = activeSessionNationalId === req.params.national_id && activeSessionStartedAt;
-  const sinceTime = isActiveSession
-    ? activeSessionStartedAt
-    : new Date(Date.now() - 2 * 60000).toISOString();
+  const sinceTime = isActiveSession ? activeSessionStartedAt : sqliteMinutesAgo(2);
 
   const reading = db.prepare(`
     SELECT * FROM vitals WHERE patient_id = ? AND source = 'sensor'
